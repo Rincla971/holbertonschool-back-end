@@ -1,42 +1,31 @@
+#!/usr/bin/python3
+"""Script to get and export todo list in JSON of an employee with REST API"""
 import json
-import requests # type: ignore
-import sys
+import requests
+from sys import argv
 
-def fetch_employee_todo_progress(employee_id):
-    base_url = 'https://jsonplaceholder.typicode.com/users'
-    todo_url = f'{base_url}/{employee_id}/todos'
 
-    try:
-        response = requests.get(todo_url)
-        response.raise_for_status()
-        todos = response.json()
-        if todos:
-            employee_name = todos[0]['username']
-            total_tasks = len(todos)
-            completed_tasks = sum(1 for todo in todos if todo['completed'])
+def export_json(id):
+    """export data in json"""
+    url = 'https://jsonplaceholder.typicode.com/users/{}/todos'.format(id)
+    req = requests.get(url, params={"_expand": "user"})
+    data = req.json()
 
-            print(f"Employee {employee_name} is done with tasks ({completed_tasks}/{total_tasks}):")
-            for todo in todos:
-                print(f"\t{todo['title']} ({'Completed' if todo['completed'] else 'Incomplete'})")
+    USER_TASK = {id: []}
+    for task in data:
+        task_dictionary = {
+            "task": task["title"],
+            "completed": task["completed"],
+            "username": task["user"]["username"]
+        }
+        USER_TASK[id].append(task_dictionary)
+    with open("{}.json".format(id), "w") as file:
+        json.dump(USER_TASK, file)
 
-            # Exporting to JSON
-            json_data = {
-                "USER_ID": [{"task": todo['title'], "completed": todo['completed'], "username": todo['username']} for todo in todos]
-            }
-            with open(f"{employee_id}.json", "w") as jsonfile:
-                json.dump(json_data, jsonfile, indent=4)
-                print(f"Data exported to {employee_id}.json")
-    except requests.exceptions.RequestException as e:
-        print("Error fetching data:", e)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = sys.argv[1]
-    if not employee_id.isdigit():
-        print("Employee ID should be an integer.")
-        sys.exit(1)
-
-    fetch_employee_todo_progress(employee_id)
+    """Main function"""
+    if len(argv) != 2:
+        print("Usage: python3 {} (int)id_employe".format(__file__))
+        exit(1)
+    export_json(argv[1])

@@ -1,34 +1,29 @@
-import requests # type: ignore
-import sys
+#!/usr/bin/python3
+"""Script to get and display todo list of an employee with REST API"""
+import requests
+from sys import argv
 
-def fetch_employee_todo_progress(employee_id):
-    base_url = 'https://jsonplaceholder.typicode.com/users'
-    todo_url = f'{base_url}/{employee_id}/todos'
 
-    try:
-        response = requests.get(todo_url)
-        response.raise_for_status()
-        todos = response.json()
-        if todos:
-            employee_name = todos[0]['username']
-            total_tasks = len(todos)
-            completed_tasks = sum(1 for todo in todos if todo['completed'])
+def callapi(id):
+    """Method to call the api, parse data and print result"""
+    url = 'https://jsonplaceholder.typicode.com/users/{}/todos'.format(id)
+    req = requests.get(url, params={"_expand": "user"})
+    data = req.json()
+    TASK_TITLE = [task["title"] for task in data if task["completed"]]
+    EMPLOYEE_NAME = data[0]["user"]["name"]
+    NUMBER_OF_DONE_TASKS = len(TASK_TITLE)
+    TOTAL_NUMBER_OF_TASKS = len(data)
+    print(
+        "Employee {} is done with tasks({}/{}):".format(EMPLOYEE_NAME,
+                                                        NUMBER_OF_DONE_TASKS,
+                                                        TOTAL_NUMBER_OF_TASKS))
+    for task_title in TASK_TITLE:
+        print("\t {}".format(task_title))
 
-            print(f"Employee {employee_name} is done with tasks ({completed_tasks}/{total_tasks}):")
-            for todo in todos:
-                if todo['completed']:
-                    print(f"\t{todo['title']}")
-    except requests.exceptions.RequestException as e:
-        print("Error fetching data:", e)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = sys.argv[1]
-    if not employee_id.isdigit():
-        print("Employee ID should be an integer.")
-        sys.exit(1)
-
-    fetch_employee_todo_progress(employee_id)
+    """Main function"""
+    if len(argv) != 2:
+        print("Usage: python3 {} (int)id_employe".format(__file__))
+        exit(1)
+    callapi(argv[1])

@@ -1,42 +1,27 @@
+#!/usr/bin/python3
+"""Script to get and export todo list of an employee with REST API"""
 import csv
-import requests # type: ignore
-import sys
+import requests
+from sys import argv
 
-def fetch_employee_todo_progress(employee_id):
-    base_url = 'https://jsonplaceholder.typicode.com/users'
-    todo_url = f'{base_url}/{employee_id}/todos'
 
-    try:
-        response = requests.get(todo_url)
-        response.raise_for_status()
-        todos = response.json()
-        if todos:
-            employee_name = todos[0]['username']
-            total_tasks = len(todos)
-            completed_tasks = sum(1 for todo in todos if todo['completed'])
+def export_csv(id):
+    """export data in CSV"""
+    url = 'https://jsonplaceholder.typicode.com/users/{}/todos'.format(id)
+    req = requests.get(url, params={"_expand": "user"})
+    data = req.json()
+    USERNAME = data[0]["user"]["username"]
 
-            print(f"Employee {employee_name} is done with tasks ({completed_tasks}/{total_tasks}):")
-            for todo in todos:
-                print(f"\t{todo['title']} ({'Completed' if todo['completed'] else 'Incomplete'})")
+    with open("{}.csv".format(id), "w", newline="") as file:
+        filewriter = csv.writer(file, quoting=csv.QUOTE_ALL)
+        for task in data:
+            filewriter.writerow(
+                [id, USERNAME, str(task["completed"]), task["title"]])
 
-            # Exporting to CSV
-            with open(f"{employee_id}.csv", "w", newline='') as csvfile:
-                csv_writer = csv.writer(csvfile)
-                csv_writer.writerow(["USER_ID", "USERNAME", "TASK_COMPLETED_STATUS", "TASK_TITLE"])
-                for todo in todos:
-                    csv_writer.writerow([todo['userId'], todo['username'], "Completed" if todo['completed'] else "Incomplete", todo['title']])
-                print(f"Data exported to {employee_id}.csv")
-    except requests.exceptions.RequestException as e:
-        print("Error fetching data:", e)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python script.py <employee_id>")
-        sys.exit(1)
-
-    employee_id = sys.argv[1]
-    if not employee_id.isdigit():
-        print("Employee ID should be an integer.")
-        sys.exit(1)
-
-    fetch_employee_todo_progress(employee_id)
+    """Main function"""
+    if len(argv) != 2:
+        print("Usage: python3 {} (int)id_employe".format(__file__))
+        exit(1)
+    export_csv(argv[1])

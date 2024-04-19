@@ -1,30 +1,30 @@
+#!/usr/bin/python3
+"""Script to get and export todo list in JSON of an employee with REST API"""
 import json
-import requests # type: ignore
+import requests
 
-def fetch_all_employees_todo():
-    base_url = 'https://jsonplaceholder.typicode.com/users'
-    try:
-        response = requests.get(base_url)
-        response.raise_for_status()
-        employees = response.json()
-        
-        all_employees_tasks = {}
-        
-        for employee in employees:
-            employee_id = employee['id']
-            username = employee['username']
-            todo_url = f'{base_url}/{employee_id}/todos'
-            response = requests.get(todo_url)
-            response.raise_for_status()
-            todos = response.json()
-            employee_tasks = [{"username": username, "task": todo['title'], "completed": todo['completed']} for todo in todos]
-            all_employees_tasks[employee_id] = employee_tasks
-        
-        with open("todo_all_employees.json", "w") as jsonfile:
-            json.dump(all_employees_tasks, jsonfile, indent=4)
-        print("Data exported to todo_all_employees.json")
-    except requests.exceptions.RequestException as e:
-        print("Error fetching data:", e)
+
+def export_all_JSON():
+    """export all data to JSON"""
+    url = "https://jsonplaceholder.typicode.com"
+    req = requests.get("{}/users".format(url))
+    data = req.json()
+    user_task = {}
+    for user in data:
+        tasks = requests.get(
+            "{}/users/{}/todos".format(url, user['id'])).json()
+
+        user_task[user["id"]] = []
+        for task in tasks:
+            task_dictionnary = {
+                "username": user["username"],
+                "task": task["title"],
+                "completed": task["completed"]
+            }
+            user_task[user["id"]].append(task_dictionnary)
+    with open("todo_all_employees.json", "w") as file:
+        json.dump(user_task, file)
+
 
 if __name__ == "__main__":
-    fetch_all_employees_todo()
+    export_all_JSON()

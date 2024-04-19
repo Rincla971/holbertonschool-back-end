@@ -1,30 +1,25 @@
 #!/usr/bin/python3
-"""Script to get and export todo list in JSON of an employee with REST API"""
+"""Script to export data in JSON format with all users"""
+
 import json
 import requests
 
 
-def export_all_JSON():
-    """export all data to JSON"""
-    url = "https://jsonplaceholder.typicode.com"
-    req = requests.get("{}/users".format(url))
-    data = req.json()
-    user_task = {}
-    for user in data:
-        tasks = requests.get(
-            "{}/users/{}/todos".format(url, user['id'])).json()
-
-        user_task[user["id"]] = []
-        for task in tasks:
-            task_dictionnary = {
-                "username": user["username"],
-                "task": task["title"],
-                "completed": task["completed"]
-            }
-            user_task[user["id"]].append(task_dictionnary)
-    with open("todo_all_employees.json", "w") as file:
-        json.dump(user_task, file)
-
-
 if __name__ == "__main__":
-    export_all_JSON()
+    api = "https://jsonplaceholder.typicode.com/"
+    users = requests.get(api + "users/").json()
+    tasks = requests.get(api + "todos/").json()
+
+    all = {}
+    for usr in users:
+        # absolutely hate this project
+        user_id = usr.get("id")
+        task_list = [{"task": task.get('title'),
+                      "completed": task.get('completed'),
+                      "username": usr.get("username")}
+                     for task in tasks if user_id == task.get("userId")]
+        all[user_id] = task_list
+
+    with open("todo_all_employees.json", "w", newline="") as jsonfile:
+        # useless comment again :)
+        json.dump(all, jsonfile)

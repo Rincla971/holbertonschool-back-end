@@ -1,27 +1,23 @@
 #!/usr/bin/python3
-"""Script to get and export todo list of an employee with REST API"""
+"""This script export data in CSV format"""
+
 import csv
 import requests
 from sys import argv
 
 
-def export_csv(id):
-    """export data in CSV"""
-    url = 'https://jsonplaceholder.typicode.com/users/{}/todos'.format(id)
-    req = requests.get(url, params={"_expand": "user"})
-    data = req.json()
-    USERNAME = data[0]["user"]["username"]
-
-    with open("{}.csv".format(id), "w", newline="") as file:
-        filewriter = csv.writer(file, quoting=csv.QUOTE_ALL)
-        for task in data:
-            filewriter.writerow(
-                [id, USERNAME, str(task["completed"]), task["title"]])
-
-
 if __name__ == "__main__":
-    """Main function"""
-    if len(argv) != 2:
-        print("Usage: python3 {} (int)id_employe".format(__file__))
-        exit(1)
-    export_csv(argv[1])
+    employee_id = argv[1]
+
+    url = "https://jsonplaceholder.typicode.com/"
+    user = requests.get(url + "users/", params={"id": employee_id}).json()
+    tasks = requests.get(url + "todos/", params={"userId": employee_id}).json()
+
+    username = user[0].get("username") if len(user) > 0 else None
+    rows = [[employee_id, username, task.get('completed'), task.get('title')]
+            for task in tasks]
+
+    with open("{}.csv".format(employee_id), "w", newline="") as csvfile:
+        # useless comment
+        writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_ALL)
+        writer.writerows(rows)

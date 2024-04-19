@@ -1,29 +1,34 @@
 #!/usr/bin/python3
-"""Script to get and display todo list of an employee with REST API"""
+"""TEST : Code from Colas to check if
+it's a code or checker error (sandbox)"""
 import requests
-from sys import argv
-
-
-def callapi(id):
-    """Method to call the api, parse data and print result"""
-    url = 'https://jsonplaceholder.typicode.com/users/{}/todos'.format(id)
-    req = requests.get(url, params={"_expand": "user"})
-    data = req.json()
-    TASK_TITLE = [task["title"] for task in data if task["completed"]]
-    EMPLOYEE_NAME = data[0]["user"]["name"]
-    NUMBER_OF_DONE_TASKS = len(TASK_TITLE)
-    TOTAL_NUMBER_OF_TASKS = len(data)
-    print(
-        "Employee {} is done with tasks({}/{}):".format(EMPLOYEE_NAME,
-                                                        NUMBER_OF_DONE_TASKS,
-                                                        TOTAL_NUMBER_OF_TASKS))
-    for task_title in TASK_TITLE:
-        print("\t {}".format(task_title))
+import sys
 
 
 if __name__ == "__main__":
-    """Main function"""
-    if len(argv) != 2:
-        print("Usage: python3 {} (int)id_employe".format(__file__))
-        exit(1)
-    callapi(argv[1])
+    if len(sys.argv) != 2:
+        print(f"Usage: python3 {__file__} employee_id(int)")
+        sys.exit(1)
+
+    URL = "https://jsonplaceholder.typicode.com"
+    EMPLOYEE_ID = sys.argv[1]
+
+    RESPONSE = requests.get(
+        f"{URL}/users/{EMPLOYEE_ID}/todos",
+        params={"_expand": "user"}
+    )
+    data = RESPONSE.json()
+
+    if not len(data):
+        print("RequestError:", 404)
+        sys.exit(1)
+
+    TASK_TITLE = [task["title"] for task in data if task["completed"]]
+    TOTAL_NUMBER_OF_TASKS = len(data)
+    NUMBER_OF_DONE_TASKS = len(TASK_TITLE)
+    EMPLOYEE_NAME = data[0]["user"]["name"]
+
+    print(f"Employee {EMPLOYEE_NAME} is done with tasks"
+          f"({NUMBER_OF_DONE_TASKS}/{TOTAL_NUMBER_OF_TASKS}):")
+    for title in TASK_TITLE:
+        print("\t ", title)
